@@ -6,7 +6,8 @@ from pathlib import Path
 # main.py reads its config at import time, so configure before it is imported.
 _tmp = tempfile.mkdtemp(prefix="triage-test-")
 os.environ["TRIAGE_AUDIT_LOG_PATH"] = os.path.join(_tmp, "audit_log.jsonl")
-os.environ["TRIAGE_HMAC_SECRET"] = "test-secret"
+os.environ["TRIAGE_HMAC_SECRET"] = "s" * 40
+os.environ["TRIAGE_INTERNAL_TOKEN"] = "t" * 40
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))                                   # main.py

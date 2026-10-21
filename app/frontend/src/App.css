@@ -225,3 +225,106 @@
   font-size: 12px;
   margin-top: 8px;
 }
+
+/* --- accounts, navigation, tables --------------------------------------- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.role-chip {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+.tab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font: inherit;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+.login-card {
+  max-width: 380px;
+}
+.login-title {
+  margin: 0 0 4px;
+  font-family: var(--display);
+}
+.text-input {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.data-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+.status-pill {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--line);
+  white-space: nowrap;
+}
+.status-bind { background: var(--risk-low-bg); color: var(--risk-low); }
+.status-refer { background: var(--risk-high-bg); color: var(--risk-high); }
+.status-blocked, .status-rejected { background: var(--risk-critical-bg); color: var(--risk-critical); }
+.submission-quote {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--line);
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}

@@ -1,133 +1,122 @@
-import express, { Request, Response } from "express";
+import { randomUUID } from "node:crypto";
+import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
+import type { Deps } from "../deps.js";
+import { requireRole } from "../middleware.js";
+import { toView, type AssessmentRow } from "../views.js";
+import { parseBody, sendAgentError } from "./http.js";
 
-export const assessRouter = express.Router();
+const MAX_SUBMISSION = 20_000;
 
-// Where the Python FastAPI service is running.
-const AGENT_API = process.env.AGENT_API_URL ?? "http://localhost:8010";
+const AssessBody = z.object({
+  submission: z.string().trim().min(1, "submission is required").max(MAX_SUBMISSION, `submission must be at most ${MAX_SUBMISSION} characters`),
+});
 
-// TypeScript interfaces describing the SHAPE of what we send/receive.
-// These don't exist at runtime (TS erases them when compiling to JS) —
-// they're purely a compile-time check that you're using the data
-// correctly, e.g. that you don't typo `.sumbission` and only find out
-// when it silently sends `undefined`.
-interface AssessBody {
-  submission?: string;
-}
+// The decision is made by a person; the server only needs to know which
+// assessment, what they chose, and why. The model's findings and confidence
+// never travel back from the browser: they come from our own database, signed
+// by the agent service, so a caller can't put fabricated evidence in the audit log.
+const DecideBody = z.object({
+  assessment_id: z.string().min(1, "assessment_id is required").max(64),
+  decision: z.enum(["bind", "refer"], { message: "decision must be 'bind' or 'refer'" }),
+  rationale: z.string().trim().min(1, "rationale is required").max(2000, "rationale must be at most 2000 characters"),
+});
 
-// POST /api/assess — phase 1: run the risk analysis, do NOT decide
-// bind/refer. That decision is made by a human later, via /decide.
-assessRouter.post("/assess", async (req: Request<{}, {}, AssessBody>, res: Response) => {
-  const submission = req.body.submission;
+export function createAssessRouter({ config, db, logger, agent }: Deps) {
+  const router = Router();
+  const underwriters = requireRole("underwriter");
 
-  if (!submission || !submission.trim()) {
-    return res.status(400).json({ error: "submission is required" });
-  }
+  // Each assessment costs several LLM calls, so cap them per user.
+  const assessLimit = rateLimit({
+    windowMs: 3_600_000,
+    limit: config.ASSESS_RATE_PER_HOUR,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    keyGenerator: (req) => req.user?.id ?? "anonymous",
+    handler: (_req, res) => void res.status(429).json({ error: "assessment limit reached, try again later" }),
+  });
 
-  try {
-    // fetch() is built into Node (has been since Node 18) — no extra
-    // package needed, unlike a few years ago.
-    const agentRes = await fetch(`${AGENT_API}/assess`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ submission }),
+  router.post("/assess", underwriters, assessLimit, async (req, res) => {
+    const body = parseBody(AssessBody, req.body, res);
+    if (!body) return;
+
+    let result: any;
+    try {
+      result = await agent.assess(body.submission, String(req.id));
+    } catch (err) {
+      return sendAgentError(err, res, logger);
+    }
+
+    const now = new Date().toISOString();
+    if (result.status !== "needs_review") {
+      // Blocked / rejected attempts are kept too: an injection attempt is a signal worth seeing.
+      const status = result.status === "blocked" ? "blocked" : "rejected";
+      if (result.status === "blocked" || result.status === "rejected_at_intake") {
+        db.prepare("INSERT INTO assessments (id, user_id, status, created_at, reason) VALUES (?, ?, ?, ?, ?)").run(
+          randomUUID(), req.user!.id, status, now, String(result.reason ?? "").slice(0, 500),
+        );
+      }
+      return void res.json({ status: result.status, reason: result.reason });
+    }
+
+    db.prepare(
+      `INSERT INTO assessments (id, user_id, status, created_at, submission_redacted, submission_sha256, evidence_json, evidence_signature)
+       VALUES (?, ?, 'needs_review', ?, ?, ?, ?, ?)`,
+    ).run(
+      result.assessment_id, req.user!.id, now, result.submission_redacted ?? null, result.submission_sha256,
+      JSON.stringify(result.evidence), result.evidence_signature,
+    );
+    const row = db.prepare("SELECT * FROM assessments WHERE id = ?").get(result.assessment_id) as AssessmentRow;
+    res.json({ ...toView(row), status: "needs_review", elapsed_seconds: result.elapsed_seconds });
+  });
+
+  router.post("/assess/decide", underwriters, async (req, res) => {
+    const body = parseBody(DecideBody, req.body, res);
+    if (!body) return;
+
+    const row = db.prepare("SELECT * FROM assessments WHERE id = ?").get(body.assessment_id) as AssessmentRow | undefined;
+    if (!row) return void res.status(404).json({ error: "unknown assessment" });
+    if (row.status !== "needs_review") return void res.status(409).json({ error: "this assessment has already been decided" });
+
+    let decided: any;
+    try {
+      decided = await agent.decide(
+        {
+          assessment_id: row.id,
+          submission_sha256: row.submission_sha256,
+          evidence: JSON.parse(row.evidence_json!),
+          evidence_signature: row.evidence_signature,
+          decision: body.decision,
+          rationale: body.rationale,
+          decided_by: { id: req.user!.id, role: req.user!.role },
+          assessed_by: row.user_id,
+        },
+        String(req.id),
+      );
+    } catch (err) {
+      return sendAgentError(err, res, logger);
+    }
+
+    // The audit log is the source of truth for what was decided; this row is
+    // the app's convenience copy. Compare-and-set on status so a duplicate
+    // that somehow got past the agent can't overwrite the first decision.
+    const updated = db
+      .prepare(
+        `UPDATE assessments SET status = 'decided', decision = ?, rationale = ?, decided_by = ?, decided_at = ?,
+                audit_seq = ?, audit_entry_hash = ? WHERE id = ? AND status = 'needs_review'`,
+      )
+      .run(body.decision, body.rationale, req.user!.id, new Date().toISOString(), decided.audit_entry.seq, decided.audit_entry.entry_hash, row.id);
+    if (updated.changes !== 1) logger.error({ assessment_id: row.id }, "decision recorded in audit log but app row was not updated");
+
+    logger.info({ assessment_id: row.id, user_id: req.user!.id, decision: body.decision, seq: decided.audit_entry.seq }, "decision");
+    res.json({
+      status: "decided",
+      final_decision: decided.final_decision,
+      computed_oversight_level: decided.computed_oversight_level,
+      audit_entry: decided.audit_entry,
     });
+  });
 
-    if (!agentRes.ok) {
-      // The Python side is unreachable or itself errored — a 502 ("Bad
-      // Gateway") correctly tells the frontend "the thing we proxy to
-      // failed", not "you sent us something wrong" (that would be a 400).
-      return res.status(502).json({ error: "agent API request failed" });
-    }
-
-    const result = await agentRes.json();
-    res.json(result);
-  } catch (err) {
-    // err is `unknown` in TypeScript (as of a few versions back) — you
-    // can't assume it has a `.message` without checking, because
-    // anything can theoretically be thrown, not just an Error object.
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(502).json({ error: `could not reach agent API: ${message}` });
-  }
-});
-
-// The client sends only WHICH assessment it is deciding on and what it
-// decided. The model's findings and confidence never travel back from the
-// browser: the agent API stored them at /assess time, so a caller can't sign
-// fabricated evidence into the audit ledger.
-interface DecideBody {
-  assessment_id?: string;
-  decision?: string;
-  rationale?: string;
+  return router;
 }
-
-// POST /api/assess/decide — phase 2: carries the REAL human decision
-// (made in the browser) through to the signed audit ledger.
-assessRouter.post("/assess/decide", async (req: Request<{}, {}, DecideBody>, res: Response) => {
-  const { assessment_id, decision, rationale } = req.body;
-  if (!assessment_id) {
-    return res.status(400).json({ error: "assessment_id is required" });
-  }
-  if (decision !== "bind" && decision !== "refer") {
-    return res.status(400).json({ error: "decision must be 'bind' or 'refer'" });
-  }
-  if (!rationale || !rationale.trim()) {
-    return res.status(400).json({ error: "rationale is required" });
-  }
-
-  try {
-    const agentRes = await fetch(`${AGENT_API}/assess/decide`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assessment_id, decision, rationale }),
-    });
-    if (agentRes.status === 404) {
-      // Unknown or already-decided assessment: the caller's problem, not a
-      // gateway failure, so don't disguise it as a 502.
-      return res.status(404).json({ error: "unknown or already-decided assessment" });
-    }
-    if (agentRes.status === 503) {
-      // The audit log failed verification and the agent refused to record the
-      // decision. The reviewer must be told it was NOT recorded, and why, not
-      // given a generic gateway error.
-      const body = await agentRes.json().catch(() => null);
-      return res.status(503).json({ error: body?.detail ?? "decision not recorded: audit log unavailable" });
-    }
-    if (!agentRes.ok) {
-      return res.status(502).json({ error: "agent API request failed" });
-    }
-    res.json(await agentRes.json());
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(502).json({ error: `could not reach agent API: ${message}` });
-  }
-});
-
-// Read access to the audit trail, proxied from the agent API. Both are
-// unauthenticated in this demo (see the README's limitations).
-async function proxyGet(path: string, res: Response) {
-  try {
-    const agentRes = await fetch(`${AGENT_API}${path}`);
-    if (!agentRes.ok) {
-      return res.status(502).json({ error: "agent API request failed" });
-    }
-    res.json(await agentRes.json());
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(502).json({ error: `could not reach agent API: ${message}` });
-  }
-}
-
-// GET /api/ledger?limit=&offset= — the recorded human decisions, oldest first,
-// plus head_hash/count for the whole log.
-assessRouter.get("/ledger", (req: Request, res: Response) => {
-  const qs = new URLSearchParams();
-  for (const key of ["limit", "offset"] as const) {
-    const value = req.query[key];
-    if (typeof value === "string") qs.set(key, value);
-  }
-  const suffix = qs.size ? `?${qs}` : "";
-  return proxyGet(`/ledger${suffix}`, res);
-});
-
-// GET /api/ledger/verify — re-checks every link and signature on disk.
-assessRouter.get("/ledger/verify", (_req: Request, res: Response) => proxyGet("/ledger/verify", res));

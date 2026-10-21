@@ -7,3 +7,7 @@ dist/
 # Per-run signed logs and the app's live audit log are local artifacts.
 **/lar_logs/run_*.json
 app/agent-api/data/
+app/backend/data/
+*.db
+*.db-wal
+*.db-shm

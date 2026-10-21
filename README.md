@@ -1,90 +1,104 @@
 # Marsh Risk Triage
 
-A property & casualty underwriting triage agent, built end to end for Marsh's
-*Software Engineer, Generative AI and Innovation* role (req `R_355019`): a
-React/TypeScript front end, a Node/Express/TypeScript API, and a Python
-service running a multi-agent LLM pipeline with guardrails, human sign-off and
-a signed audit trail. All submissions are synthetic; no real client data.
+An underwriting triage application: a person signs in, submits a property risk,
+three LLM analyses run in parallel against retrieved underwriting guidelines, and
+**a human decides** bind or refer. Every decision, with the exact evidence the
+reviewer saw and who they were, goes into a tamper-evident audit log. Built end
+to end for Marsh's *Software Engineer, Generative AI and Innovation* role (req
+`R_355019`). All submissions are synthetic; no real client data.
 
 ```
-React + TS  ──fetch──▶  Express + TS  ──fetch──▶  FastAPI + Lár  ──▶  local LLM (Ollama)
- app/frontend            app/backend              app/agent-api
+Browser ──▶ frontend (React + TS, nginx) ──▶ backend (Node + Express + TS, SQLite) ──▶ agent-api (Python, FastAPI, Lár) ──▶ model
+             static, strict CSP               accounts, sessions, roles, history       internal only; signed evidence;
+                                                                                         hash-chained audit log
 ```
-
-## What it does
-
-1. **Intake validation** rejects empty or whitespace-only submissions.
-2. **PII redaction** (PPSN, phone, email) for the persisted log copy.
-3. **Prompt-injection guard** blocks adversarial input before any model sees it.
-4. **Guideline retrieval (RAG).** BM25 over a small *synthetic* underwriting
-   guidelines corpus (`eval/guidelines/`) pulls the guidelines relevant to each
-   risk dimension. Each branch sees only its own dimension's guidelines (plus
-   the general ones) and is asked to cite the ids it relies on; the UI shows
-   which guidelines each branch was grounded in.
-5. **Three independent risk analyses in parallel** (property, financial,
-   regulatory), each a separate LLM call returning structured JSON. Separate
-   calls matter: one combined prompt can average away a single high-risk
-   signal, and the eval cases are built to catch that.
-6. **Consolidation** takes the *worst* branch, never an average, and lists
-   every branch's finding for the reviewer.
-7. **Oversight scoring** decides how much human review the action needs.
-8. **Human decision.** The reviewer picks bind or refer and must give a
-   rationale in the UI.
-9. **Audit record.** The decision, the rationale and the exact evidence the
-   reviewer was shown are appended to a hash-chained, append-only log that
-   survives restarts (see [Audit trail](#audit-trail)).
-
-The agent pipeline is built on [Lár](https://github.com/snath-ai/lar), my own
-open-source agent framework.
 
 ## Run it
 
-Needs [Ollama](https://ollama.com) running with the model pulled
+Needs Docker and [Ollama](https://ollama.com) running with the model pulled
 (`ollama pull qwen2.5:14b`).
 
-**With Docker** (one command, then open http://localhost:5173):
-
 ```bash
-docker compose up --build
+docker compose up --build        # then open http://localhost:5173
+docker compose logs backend | grep -A2 "DEMO LOGINS"     # generated demo password
 ```
 
-The containers reach Ollama on your host. To run Ollama inside compose instead,
-see the comment at the top of `docker-compose.yml`. If ports 4000/5173 are
-taken, set `BACKEND_PORT` / `FRONTEND_PORT`.
+On first start the backend creates two demo accounts, `underwriter@demo.local`
+and `auditor@demo.local`, with a random password printed once to its log (set
+`DEMO_PASSWORD` to choose it). This is **development mode** only: production
+mode refuses to seed demo users.
 
-**Without Docker** (Python 3.10+, Node 20+):
+For a production-style deployment (required secrets, strict startup checks,
+TLS terminated by your proxy) see [docs/OPERATIONS.md](docs/OPERATIONS.md).
+Without Docker: `pip install -r requirements.txt`, then `uvicorn main:app --port 8010`
+in `app/agent-api`, and `npm ci && npm run dev` in `app/backend` and `app/frontend`.
 
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+## What it does
 
-# three terminals
-cd app/agent-api && uvicorn main:app --port 8010
-cd app/backend   && npm ci && npm run dev
-cd app/frontend  && npm ci && npm run dev      # http://localhost:5173
-```
+| Role | Can |
+|---|---|
+| **Underwriter** | submit a risk, read the three findings and the guidelines each was grounded in, record Bind/Refer with a rationale, see their own history |
+| **Auditor** | read everything (all history, the audit log), verify the audit chain; cannot submit or decide |
 
-Configuration is by environment variable; see `.env.example`.
-`requirements.txt` installs Lár from a pinned GitHub commit, because the
-latest PyPI release (2.1.0) predates the guard and human-decision APIs used
-here.
+The pipeline behind a submission: intake validation → PII redaction (PPSN,
+phone, email) → prompt-injection guard → guideline retrieval (RAG) → three
+independent LLM analyses (property, financial, regulatory) → worst-branch
+consolidation → oversight scoring → **human decision** → audit record. A
+consolidated risk is the *worst* of the three, never an average.
+
+## What makes it production-minded
+
+- **Accounts and access control.** scrypt password hashing, HttpOnly
+  `SameSite=Lax` sessions stored server-side as hashes, role checks on every
+  route, login rate limiting, CSRF origin checks. The UI hides what a role can't
+  do, but the server is what enforces it.
+- **The browser is never trusted for evidence or identity.** It sends an
+  assessment id, a decision and a rationale. The findings come from the
+  server's own record, signed by the agent service; the reviewer's identity
+  comes from the session. A forged or edited finding is rejected before anything
+  is recorded.
+- **An audit log that survives restarts and shows tampering:** hash-chained,
+  HMAC-signed, append-only, verifiable by an auditor in the UI, and fail-closed
+  (a decision is refused, loudly, if the log no longer verifies).
+- **Operational hygiene:** validated configuration that refuses unsafe
+  production settings; JSON logs with request ids across services and
+  credentials redacted; liveness and readiness endpoints; graceful shutdown;
+  agent-call timeouts with honest status codes (400/403/404/409/429/502/503/504);
+  versioned database migrations; request size and rate limits.
+- **Hardened containers:** non-root, all capabilities dropped, read-only root
+  filesystems, internal-only agent service, a strict CSP with fonts bundled
+  (no third-party requests), healthchecks.
+
+[docs/SECURITY.md](docs/SECURITY.md) maps each threat to its control and the
+test that covers it, **and lists what is not protected**. Read that before
+treating this as more than it is.
+
+## What "production-grade" means here, and doesn't
+
+This is built and tested to a production standard for what it covers, and the
+limits are written down rather than hidden. It has **not** been
+penetration-tested, has no TLS termination of its own, no MFA or SSO, a
+single-node SQLite/file design, a weak (phrase-list) prompt-injection guard, and
+regex-only PII redaction. It also depends on a local model whose output varies
+run to run. Those are the gaps between this and a regulated deployment; each is
+listed with its mitigation in [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Tests and CI
 
 ```bash
-cd app/backend && npm test                                  # 19 Vitest + supertest tests
-pip install -r requirements-dev.txt && pytest app/agent-api # 45 tests, no model needed
+cd app/backend  && npm test        # 99 tests: auth, roles, CSRF, validation, sessions, config, logging
+cd app/frontend && npm test        # 31 tests: login, role-based views, decision flow, error states
+pip install -r requirements-dev.txt && pytest app/agent-api   # 71 tests, no model needed
 ```
 
-The backend tests stub the agent API and cover validation, error mapping
-(400/404/502) and that only the id, decision and rationale are forwarded. The
-API tests cover the guards, the decide path (server-side evidence, single-use
-ids), the audit log (chaining, restart survival, tamper detection, failing
-closed) and retrieval. One live test needs Ollama and is
-skipped unless `TRIAGE_LIVE=1`. GitHub Actions (`.github/workflows/ci.yml`)
-runs typecheck, tests, lint, the frontend build and `docker compose build` on
-every push. Nothing in CI calls a model, so model behaviour is covered by the
-eval harness below, not by CI.
+The backend and agent tests stub each other, so they run without a model. The
+security-critical behaviours were **mutation-checked**: each protection was
+removed in turn and a test had to fail. One live test needs Ollama and is
+skipped unless `TRIAGE_LIVE=1`. GitHub Actions runs typecheck, tests, lint,
+builds, `npm audit` and `pip-audit`, validates both compose files (and checks
+the production one refuses to start without secrets) and builds the images.
+Nothing in CI calls a model, so model behaviour is covered by the evaluation
+below, not by CI.
 
 ## Evaluation
 
@@ -138,67 +152,68 @@ guarantee. Build notes and full output: `eval/lar_agent/NOTES.md`,
 
 ## Audit trail
 
-Every bind/refer decision is appended to `audit_log.jsonl` (Docker: the `audit`
-volume at `/data`; otherwise `app/agent-api/data/`, or `TRIAGE_AUDIT_LOG_PATH`).
-Each line records the decision, the reviewer's rationale, the oversight level,
-a hash of the submission (never its text, since it may contain PII), and the
-full evidence the reviewer was shown: the three findings, confidences and the
-guidelines consulted. Each line is signed with HMAC-SHA256 over its content
-*and the previous line's hash*, so editing, deleting or reordering an entry
-breaks the chain from that point.
+Every decision is appended to `audit_log.jsonl` (a Docker volume). Each line
+records the decision, the rationale, the oversight level, **who decided** (the
+user id and role, set by the server from the session) and **who submitted**, a
+hash of the submission (never its text), and the full evidence the reviewer was
+shown. Each line is signed with HMAC-SHA256 over its content *and the previous
+line's hash*, so editing, deleting or reordering an entry breaks the chain from
+that point. Auditors see the log and can verify it from the UI (Audit log tab)
+or the API:
 
 ```bash
-curl localhost:4000/api/ledger?limit=20     # entries, oldest first, plus count and head_hash
-curl localhost:4000/api/ledger/verify       # re-reads the file; reports the first broken entry
+GET /api/ledger?limit=20     # entries, oldest first, plus count and head_hash (auditor only)
+GET /api/ledger/verify       # re-reads the file; reports the first broken entry
 ```
 
 The log is read back from disk on every append, so a restart continues the
-chain. If verification fails, new decisions are refused (HTTP 503) instead of
-being appended behind the break, and the reviewer's assessment is kept so they
-can retry once the log is repaired.
+chain, and "already decided" is answered from the log itself, so double
+decisions are refused across restarts too. If verification fails, new decisions
+get HTTP 503 ("decision NOT recorded") instead of being appended behind the
+break, and the reviewer's assessment is kept so they can retry once it's repaired.
 
-What this does not protect against:
+What this does not protect against (see [docs/SECURITY.md](docs/SECURITY.md)):
 - **Truncation from the end.** A shorter chain is still a valid chain. Record
-  `head_hash` and `count` somewhere the log's owner can't edit and compare them
+  `head_hash` and the count somewhere the log's owner can't edit and compare
   later; verification alone can't see this (a test pins it).
 - **Anyone with the signing secret** can rewrite and re-sign the whole file.
-  The default secret is public (`change-me` in compose); set `TRIAGE_HMAC_SECRET`.
-- **Concurrency across processes.** Appends are serialised in-process only, so
-  run a single worker.
-- **Read access is unauthenticated** and there is no reviewer identity (every
-  entry says `marsh-app-user`).
+- **No key rotation:** entries carry no key id, so changing the secret makes old
+  entries fail verification (interim procedure in the operations doc).
+- **One process:** appends are serialised in-process only.
 
 ## Design decisions worth knowing
 
-- **The browser never supplies the evidence.** `/assess` stores the model's
-  findings server-side and returns an `assessment_id`; `/assess/decide`
-  accepts only that id, the decision and the rationale. A caller cannot sign
-  fabricated evidence into the log, and each assessment can be decided once.
-- **Upstream failures surface as errors**, not blank pages: 502 when the agent
-  API is down, 404 for an unknown or already-decided assessment, and a banner
-  in the UI.
-- **Blocked and rejected submissions** return their own status and never reach
-  the decision step.
+- **The agent service is stateless.** It returns evidence plus a signature; the
+  backend stores both, and the agent verifies the signature when the decision
+  comes back. A restart loses no pending reviews, and there is no server-side
+  session state in Python to keep consistent.
+- **Why three tiers.** Python is where the model work lives; the browser can't
+  safely call it. The Express layer authenticates, validates, rate-limits and
+  maps failures to honest status codes, which is its whole job.
+- **Honest failures.** 401 and 403 are the caller's identity and rights, 404 and
+  409 the caller's mistake, 429 their rate, 502/504 a dependency, 503 "the audit
+  log refused the write". The UI shows the server's reason instead of a blank page.
+- **Another user's assessment looks exactly like a missing one** (same 404), so
+  ids can't be probed.
+- **Blocked and rejected submissions are recorded,** since an injection attempt
+  is a signal; they never reach the decision step.
 
 ## Known limitations
 
-- The injection guard is a fixed list of known phrases. A paraphrased attack
-  that avoids all of them is not caught (tested; see `eval/` and the v1 repo).
-- PII redaction is regex only (PPSN, phone, email). Names and street addresses
-  need a real NER detector. The executor also snapshots full state into its
-  signed run logs, so unredacted text can still reach those logs (documented in
-  `eval/lar_agent/NOTES.md`).
-- Pending assessments live in memory and are lost on restart (decisions are durable; an unfinished review is not).
-- The reviewer identity is a fixed placeholder; there is no authentication.
-- The default signing key is a public dev key. Set `TRIAGE_HMAC_SECRET`.
-- Everything runs locally against Ollama, in Docker or not. No cloud deployment
-  yet, and nginx serves the built frontend over plain HTTP.
-- Model output varies run to run: severity-tier scores moved between 7/10 and
-  8/10 across identical runs, and one baseline re-run got `c09` wrong (BIND
-  expected, REFER returned) because the financial branch scored missing
-  financial detail as HIGH. That is a false alarm, the safe direction, but it
-  means single-run numbers are indicative only. RAG has had one run so far, so
-  it is not established that it removes this.
+- Model output varies run to run, and the model can state facts the submission
+  never gave (for example "no flood zone" when flood was not mentioned). A human
+  reviews every finding; that is the design, not a guarantee of accuracy.
+- The injection guard is a phrase list; a paraphrased attack is not caught.
+- PII redaction is regex-only. Names and street addresses are not detected, so
+  they can be stored in assessment history (only the redacted text is stored).
+- Single node: SQLite, a file audit log, in-memory rate limits.
+- Password-only authentication; accounts are created from the command line.
+- No TLS termination, no penetration test, no compliance assessment (DPIA etc.).
+- The unfinished-review state is kept in the app database, not the agent, so a
+  database loss loses pending reviews (decisions are in the audit log).
+- Severity-tier scores moved between 7/10 and 8/10 across identical eval runs,
+  and one baseline run got `c09` wrong (a false alarm, the safe direction), so
+  treat single-run eval numbers as indicative.
 
 ## Earlier version
 

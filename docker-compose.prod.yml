@@ -1,0 +1,33 @@
+# Production override. Every secret is REQUIRED (compose refuses to start
+# without it) and the services run in APP_ENV=production, which makes them
+# refuse default or short secrets, insecure cookies and a non-HTTPS origin.
+#
+# This file does not terminate TLS. Put a reverse proxy in front (Caddy, nginx,
+# a cloud load balancer) that serves the frontend and the API over HTTPS on the
+# same site (e.g. app.example.com and api.example.com), and set the variables:
+#   TRIAGE_HMAC_SECRET, TRIAGE_INTERNAL_TOKEN   32+ random characters each
+#   ALLOWED_ORIGIN                              https://app.example.com
+#   PUBLIC_BACKEND_URL                          https://api.example.com
+# Create the first accounts with scripts/create-user (see docs/OPERATIONS.md).
+services:
+  agent-api:
+    environment:
+      APP_ENV: production
+      TRIAGE_HMAC_SECRET: ${TRIAGE_HMAC_SECRET:?set TRIAGE_HMAC_SECRET (32+ random characters)}
+      TRIAGE_INTERNAL_TOKEN: ${TRIAGE_INTERNAL_TOKEN:?set TRIAGE_INTERNAL_TOKEN (32+ random characters)}
+
+  backend:
+    environment:
+      APP_ENV: production
+      TRIAGE_INTERNAL_TOKEN: ${TRIAGE_INTERNAL_TOKEN:?set TRIAGE_INTERNAL_TOKEN (32+ random characters)}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:?set ALLOWED_ORIGIN (https://...)}
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+      SEED_DEMO_USERS: "false"
+
+  frontend:
+    build:
+      args:
+        VITE_BACKEND_URL: ${PUBLIC_BACKEND_URL:?set PUBLIC_BACKEND_URL (https://...)}
+    environment:
+      BACKEND_ORIGIN: ${PUBLIC_BACKEND_URL:?set PUBLIC_BACKEND_URL (https://...)}

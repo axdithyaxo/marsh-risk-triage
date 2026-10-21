@@ -93,7 +93,25 @@ class AuditLog:
         return {"ok": True, "entries": good, "head_hash": prev, "error": None}
 
     def entries(self) -> list:
-        return [json.loads(line) for line in self._lines()]
+        out = []
+        for seq, line in enumerate(self._lines(), start=1):
+            try:
+                out.append(json.loads(line))
+            except ValueError:
+                raise AuditLogCorrupt({"seq": seq, "reason": "line is not valid JSON"})
+        return out
+
+    def has_assessment(self, assessment_id: str) -> bool:
+        """Has this assessment already been decided? Tolerates damaged lines:
+        a corrupt log must surface as AuditLogCorrupt at append time, not as a
+        crash here, and an unreadable line can't be a decision we can honour."""
+        for line in self._lines():
+            try:
+                if json.loads(line).get("assessment_id") == assessment_id:
+                    return True
+            except (ValueError, AttributeError):
+                continue
+        return False
 
     def append(self, **fields) -> dict:
         """Add one decision. `fields` must include `evidence` (the model output

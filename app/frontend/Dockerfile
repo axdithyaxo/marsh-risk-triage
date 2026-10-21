@@ -8,6 +8,10 @@ ARG VITE_BACKEND_URL=http://localhost:4000
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm run build
 
-FROM nginx:alpine
+# Unprivileged nginx: runs as a non-root user and listens on 8080.
+FROM nginxinc/nginx-unprivileged:1.27-alpine
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+ENV BACKEND_ORIGIN=http://localhost:4000
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO- http://localhost:8080/healthz || exit 1
