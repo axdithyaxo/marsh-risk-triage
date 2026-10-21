@@ -109,9 +109,9 @@ cd eval/langchain_agent && pip install -r requirements.txt && python eval_harnes
 
 | | Baseline | With RAG |
 |---|---|---|
-| Decision accuracy | 10/10 | 10/10 |
+| Decision accuracy | 10/10 (9/10 on one of four runs) | 10/10 (one run) |
 | False negatives | 0 | 0 |
-| Severity tier exactly right | 8/10 in the committed run (7/10 on a re-run) | 8/10 (one run) |
+| Severity tier exactly right | 7-8/10 across runs | 8/10 (one run) |
 | Cases where a finding cites a retrieved guideline id | n/a | 7 of 8 (the other two are the blocked and empty cases) |
 | Wall clock for 10 cases | 60 s | 92 s |
 
@@ -160,7 +160,11 @@ guarantee. Build notes and full output: `eval/lar_agent/NOTES.md`,
 - Everything runs locally against Ollama, in Docker or not. No cloud deployment
   yet, and nginx serves the built frontend over plain HTTP.
 - Model output varies run to run: severity-tier scores moved between 7/10 and
-  8/10 across identical runs, so treat single-run numbers as indicative.
+  8/10 across identical runs, and one baseline re-run got `c09` wrong (BIND
+  expected, REFER returned) because the financial branch scored missing
+  financial detail as HIGH. That is a false alarm, the safe direction, but it
+  means single-run numbers are indicative only. RAG has had one run so far, so
+  it is not established that it removes this.
 
 ## Earlier version
 
