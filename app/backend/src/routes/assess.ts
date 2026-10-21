@@ -85,6 +85,13 @@ assessRouter.post("/assess/decide", async (req: Request<{}, {}, DecideBody>, res
       // gateway failure, so don't disguise it as a 502.
       return res.status(404).json({ error: "unknown or already-decided assessment" });
     }
+    if (agentRes.status === 503) {
+      // The audit log failed verification and the agent refused to record the
+      // decision. The reviewer must be told it was NOT recorded, and why, not
+      // given a generic gateway error.
+      const body = await agentRes.json().catch(() => null);
+      return res.status(503).json({ error: body?.detail ?? "decision not recorded: audit log unavailable" });
+    }
     if (!agentRes.ok) {
       return res.status(502).json({ error: "agent API request failed" });
     }
@@ -94,3 +101,33 @@ assessRouter.post("/assess/decide", async (req: Request<{}, {}, DecideBody>, res
     res.status(502).json({ error: `could not reach agent API: ${message}` });
   }
 });
+
+// Read access to the audit trail, proxied from the agent API. Both are
+// unauthenticated in this demo (see the README's limitations).
+async function proxyGet(path: string, res: Response) {
+  try {
+    const agentRes = await fetch(`${AGENT_API}${path}`);
+    if (!agentRes.ok) {
+      return res.status(502).json({ error: "agent API request failed" });
+    }
+    res.json(await agentRes.json());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(502).json({ error: `could not reach agent API: ${message}` });
+  }
+}
+
+// GET /api/ledger?limit=&offset= — the recorded human decisions, oldest first,
+// plus head_hash/count for the whole log.
+assessRouter.get("/ledger", (req: Request, res: Response) => {
+  const qs = new URLSearchParams();
+  for (const key of ["limit", "offset"] as const) {
+    const value = req.query[key];
+    if (typeof value === "string") qs.set(key, value);
+  }
+  const suffix = qs.size ? `?${qs}` : "";
+  return proxyGet(`/ledger${suffix}`, res);
+});
+
+// GET /api/ledger/verify — re-checks every link and signature on disk.
+assessRouter.get("/ledger/verify", (_req: Request, res: Response) => proxyGet("/ledger/verify", res));

@@ -4,6 +4,6 @@ __pycache__/
 dist/
 .DS_Store
 .env
-# Per-run signed logs and the app's live ledger are local artifacts.
+# Per-run signed logs and the app's live audit log are local artifacts.
 **/lar_logs/run_*.json
 app/agent-api/data/

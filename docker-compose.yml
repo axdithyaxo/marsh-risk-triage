@@ -17,7 +17,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ledger:/data
+      - audit:/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/openapi.json')"]
       interval: 5s
@@ -52,5 +52,5 @@ services:
       - ollama:/root/.ollama
 
 volumes:
-  ledger:
+  audit:
   ollama:

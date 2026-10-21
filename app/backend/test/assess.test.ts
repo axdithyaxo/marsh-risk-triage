@@ -102,9 +102,58 @@ describe("POST /api/assess/decide", () => {
     expect(res.status).toBe(404);
   });
 
+  it("tells the reviewer the decision was NOT recorded when the audit log is broken (503, not 502)", async () => {
+    stubAgent(503, { detail: "audit log is not intact, decision NOT recorded: entry 1 failed" });
+    const res = await request(app).post("/api/assess/decide").send(valid);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatch(/NOT recorded/);
+  });
+
   it("returns 502 when the agent API errors", async () => {
     stubAgent(500, {});
     const res = await request(app).post("/api/assess/decide").send(valid);
+    expect(res.status).toBe(502);
+  });
+});
+
+describe("GET /api/ledger", () => {
+  it("proxies the audit log from the agent API", async () => {
+    const body = { count: 1, head_hash: "h", offset: 0, entries: [{ seq: 1 }] };
+    const fetchMock = stubAgent(200, body);
+    const res = await request(app).get("/api/ledger");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(body);
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/ledger$/);
+  });
+
+  it("forwards limit and offset, and nothing else", async () => {
+    const fetchMock = stubAgent(200, {});
+    await request(app).get("/api/ledger?limit=5&offset=10&evil=1");
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.pathname).toBe("/ledger");
+    expect(Object.fromEntries(url.searchParams)).toEqual({ limit: "5", offset: "10" });
+  });
+
+  it("returns 502 when the agent API is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED")));
+    const res = await request(app).get("/api/ledger");
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatch(/could not reach agent API/);
+  });
+});
+
+describe("GET /api/ledger/verify", () => {
+  it("returns the agent's verification result", async () => {
+    const result = { ok: false, entries: 1, head_hash: "h", error: { seq: 2, reason: "signature mismatch" } };
+    stubAgent(200, result);
+    const res = await request(app).get("/api/ledger/verify");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(result);
+  });
+
+  it("returns 502 when the agent API errors", async () => {
+    stubAgent(500, {});
+    const res = await request(app).get("/api/ledger/verify");
     expect(res.status).toBe(502);
   });
 });

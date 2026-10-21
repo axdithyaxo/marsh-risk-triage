@@ -12,10 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY eval/lar_agent/agent.py eval/lar_agent/retrieval.py eval/lar_agent/
 COPY eval/guidelines eval/guidelines
-COPY app/agent-api/main.py app/agent-api/main.py
+COPY app/agent-api/main.py app/agent-api/audit_log.py app/agent-api/
 
 WORKDIR /srv/app/agent-api
-ENV TRIAGE_LEDGER_PATH=/data/app_authority_ledger.json
+ENV TRIAGE_AUDIT_LOG_PATH=/data/audit_log.jsonl
 VOLUME /data
 EXPOSE 8010
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8010"]

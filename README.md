@@ -30,8 +30,9 @@ React + TS  ──fetch──▶  Express + TS  ──fetch──▶  FastAPI + 
 7. **Oversight scoring** decides how much human review the action needs.
 8. **Human decision.** The reviewer picks bind or refer and must give a
    rationale in the UI.
-9. **Signed audit record.** The decision is appended to an HMAC-SHA256
-   ledger (stakeholder, decision, rationale, risk score, timestamp).
+9. **Audit record.** The decision, the rationale and the exact evidence the
+   reviewer was shown are appended to a hash-chained, append-only log that
+   survives restarts (see [Audit trail](#audit-trail)).
 
 The agent pipeline is built on [Lár](https://github.com/snath-ai/lar), my own
 open-source agent framework.
@@ -71,14 +72,15 @@ here.
 ## Tests and CI
 
 ```bash
-cd app/backend && npm test                                  # 13 Vitest + supertest tests
-pip install -r requirements-dev.txt && pytest app/agent-api # 21 tests, no model needed
+cd app/backend && npm test                                  # 19 Vitest + supertest tests
+pip install -r requirements-dev.txt && pytest app/agent-api # 45 tests, no model needed
 ```
 
 The backend tests stub the agent API and cover validation, error mapping
 (400/404/502) and that only the id, decision and rationale are forwarded. The
-API tests cover the guards, the decide/ledger path (server-side evidence,
-single-use ids, signed ledger) and retrieval. One live test needs Ollama and is
+API tests cover the guards, the decide path (server-side evidence, single-use
+ids), the audit log (chaining, restart survival, tamper detection, failing
+closed) and retrieval. One live test needs Ollama and is
 skipped unless `TRIAGE_LIVE=1`. GitHub Actions (`.github/workflows/ci.yml`)
 runs typecheck, tests, lint, the frontend build and `docker compose build` on
 every push. Nothing in CI calls a model, so model behaviour is covered by the
@@ -134,12 +136,44 @@ decision in these runs. That is a statement about these runs, not a
 guarantee. Build notes and full output: `eval/lar_agent/NOTES.md`,
 `eval/langchain_agent/NOTES.md`.
 
+## Audit trail
+
+Every bind/refer decision is appended to `audit_log.jsonl` (Docker: the `audit`
+volume at `/data`; otherwise `app/agent-api/data/`, or `TRIAGE_AUDIT_LOG_PATH`).
+Each line records the decision, the reviewer's rationale, the oversight level,
+a hash of the submission (never its text, since it may contain PII), and the
+full evidence the reviewer was shown: the three findings, confidences and the
+guidelines consulted. Each line is signed with HMAC-SHA256 over its content
+*and the previous line's hash*, so editing, deleting or reordering an entry
+breaks the chain from that point.
+
+```bash
+curl localhost:4000/api/ledger?limit=20     # entries, oldest first, plus count and head_hash
+curl localhost:4000/api/ledger/verify       # re-reads the file; reports the first broken entry
+```
+
+The log is read back from disk on every append, so a restart continues the
+chain. If verification fails, new decisions are refused (HTTP 503) instead of
+being appended behind the break, and the reviewer's assessment is kept so they
+can retry once the log is repaired.
+
+What this does not protect against:
+- **Truncation from the end.** A shorter chain is still a valid chain. Record
+  `head_hash` and `count` somewhere the log's owner can't edit and compare them
+  later; verification alone can't see this (a test pins it).
+- **Anyone with the signing secret** can rewrite and re-sign the whole file.
+  The default secret is public (`change-me` in compose); set `TRIAGE_HMAC_SECRET`.
+- **Concurrency across processes.** Appends are serialised in-process only, so
+  run a single worker.
+- **Read access is unauthenticated** and there is no reviewer identity (every
+  entry says `marsh-app-user`).
+
 ## Design decisions worth knowing
 
 - **The browser never supplies the evidence.** `/assess` stores the model's
   findings server-side and returns an `assessment_id`; `/assess/decide`
   accepts only that id, the decision and the rationale. A caller cannot sign
-  fabricated evidence into the ledger, and each assessment can be decided once.
+  fabricated evidence into the log, and each assessment can be decided once.
 - **Upstream failures surface as errors**, not blank pages: 502 when the agent
   API is down, 404 for an unknown or already-decided assessment, and a banner
   in the UI.
@@ -154,7 +188,7 @@ guarantee. Build notes and full output: `eval/lar_agent/NOTES.md`,
   need a real NER detector. The executor also snapshots full state into its
   signed run logs, so unredacted text can still reach those logs (documented in
   `eval/lar_agent/NOTES.md`).
-- Pending assessments live in memory and are lost on restart.
+- Pending assessments live in memory and are lost on restart (decisions are durable; an unfinished review is not).
 - The reviewer identity is a fixed placeholder; there is no authentication.
 - The default signing key is a public dev key. Set `TRIAGE_HMAC_SECRET`.
 - Everything runs locally against Ollama, in Docker or not. No cloud deployment
