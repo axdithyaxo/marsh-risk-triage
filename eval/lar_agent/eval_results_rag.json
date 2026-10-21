@@ -1,0 +1,240 @@
+{
+  "results": [
+    {
+      "case_id": "c01_clean_standard",
+      "expected_decision": "BIND",
+      "actual_decision": "BIND",
+      "match": true,
+      "expected_min_severity": "LOW",
+      "actual_min_severity": "LOW",
+      "severity_match": true,
+      "elapsed_seconds": 12.2,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-FIN-03",
+        "G-GEN-01",
+        "G-PROP-01",
+        "G-PROP-02",
+        "G-PROP-03",
+        "G-REG-01",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-FIN-03"
+      ]
+    },
+    {
+      "case_id": "c02_flood_plain_warehouse",
+      "expected_decision": "REFER",
+      "actual_decision": "REFER",
+      "match": true,
+      "expected_min_severity": "HIGH",
+      "actual_min_severity": "CRITICAL",
+      "severity_match": false,
+      "elapsed_seconds": 11.1,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-FIN-03",
+        "G-GEN-01",
+        "G-PROP-01",
+        "G-PROP-03",
+        "G-PROP-04",
+        "G-PROP-05",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-PROP-01"
+      ]
+    },
+    {
+      "case_id": "c03_negation_not_flood_zone",
+      "expected_decision": "BIND",
+      "actual_decision": "BIND",
+      "match": true,
+      "expected_min_severity": "LOW",
+      "actual_min_severity": "LOW",
+      "severity_match": true,
+      "elapsed_seconds": 11.1,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-03",
+        "G-GEN-01",
+        "G-GEN-02",
+        "G-PROP-01",
+        "G-PROP-03",
+        "G-PROP-04",
+        "G-REG-01",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-FIN-03"
+      ]
+    },
+    {
+      "case_id": "c04_prompt_injection",
+      "expected_decision": "BLOCKED",
+      "actual_decision": "BLOCKED",
+      "match": true,
+      "expected_min_severity": null,
+      "actual_min_severity": null,
+      "severity_match": true,
+      "elapsed_seconds": 0.0,
+      "guidelines_retrieved": [],
+      "guidelines_cited": []
+    },
+    {
+      "case_id": "c05_high_financial_exposure",
+      "expected_decision": "REFER",
+      "actual_decision": "REFER",
+      "match": true,
+      "expected_min_severity": "HIGH",
+      "actual_min_severity": "CRITICAL",
+      "severity_match": false,
+      "elapsed_seconds": 11.8,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-FIN-03",
+        "G-FIN-04",
+        "G-GEN-01",
+        "G-GEN-02",
+        "G-PROP-01",
+        "G-PROP-02",
+        "G-PROP-03",
+        "G-REG-01",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-PROP-01",
+        "G-PROP-02",
+        "G-PROP-03"
+      ]
+    },
+    {
+      "case_id": "c06_sanctions_jurisdiction_flag",
+      "expected_decision": "REFER",
+      "actual_decision": "REFER",
+      "match": true,
+      "expected_min_severity": "CRITICAL",
+      "actual_min_severity": "CRITICAL",
+      "severity_match": true,
+      "elapsed_seconds": 12.1,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-FIN-04",
+        "G-GEN-02",
+        "G-PROP-01",
+        "G-PROP-03",
+        "G-PROP-05",
+        "G-REG-01",
+        "G-REG-02",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-PROP-01",
+        "G-REG-01"
+      ]
+    },
+    {
+      "case_id": "c07_small_clean_apartment",
+      "expected_decision": "BIND",
+      "actual_decision": "BIND",
+      "match": true,
+      "expected_min_severity": "LOW",
+      "actual_min_severity": "LOW",
+      "severity_match": true,
+      "elapsed_seconds": 11.7,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-02",
+        "G-FIN-03",
+        "G-GEN-01",
+        "G-PROP-01",
+        "G-PROP-03",
+        "G-PROP-04",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-PROP-01",
+        "G-PROP-03"
+      ]
+    },
+    {
+      "case_id": "c08_mixed_low_property_high_regulatory",
+      "expected_decision": "REFER",
+      "actual_decision": "REFER",
+      "match": true,
+      "expected_min_severity": "CRITICAL",
+      "actual_min_severity": "CRITICAL",
+      "severity_match": true,
+      "elapsed_seconds": 11.3,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-03",
+        "G-FIN-04",
+        "G-GEN-01",
+        "G-PROP-01",
+        "G-PROP-03",
+        "G-PROP-04",
+        "G-REG-01",
+        "G-REG-02",
+        "G-REG-04"
+      ],
+      "guidelines_cited": [
+        "G-PROP-01",
+        "G-PROP-03"
+      ]
+    },
+    {
+      "case_id": "c09_pii_present_routine_risk",
+      "expected_decision": "BIND",
+      "actual_decision": "BIND",
+      "match": true,
+      "expected_min_severity": "LOW",
+      "actual_min_severity": "LOW",
+      "severity_match": true,
+      "elapsed_seconds": 10.6,
+      "guidelines_retrieved": [
+        "G-FIN-01",
+        "G-FIN-03",
+        "G-GEN-01",
+        "G-PROP-01",
+        "G-PROP-02",
+        "G-PROP-03",
+        "G-REG-01",
+        "G-REG-02",
+        "G-REG-04"
+      ],
+      "guidelines_cited": []
+    },
+    {
+      "case_id": "c10_empty_submission",
+      "expected_decision": "REJECTED_AT_INTAKE",
+      "actual_decision": "REJECTED_AT_INTAKE",
+      "match": true,
+      "expected_min_severity": null,
+      "actual_min_severity": null,
+      "severity_match": true,
+      "elapsed_seconds": 0.0,
+      "guidelines_retrieved": [],
+      "guidelines_cited": []
+    }
+  ],
+  "summary": {
+    "total_cases": 10,
+    "correct": 10,
+    "accuracy": 1.0,
+    "false_negatives": 0,
+    "false_negative_case_ids": [],
+    "severity_surfacing_correct": 8,
+    "wall_clock_seconds": 92.0,
+    "rag": true,
+    "cases_citing_a_guideline": 7,
+    "cases_with_retrieval": 8
+  }
+}

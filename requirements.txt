@@ -4,6 +4,3 @@
 lar-engine @ git+https://github.com/snath-ai/lar.git@3672463ce15ee85c40af61465533590db771611d
 fastapi
 uvicorn
-langchain-core
-langchain-ollama
-langgraph

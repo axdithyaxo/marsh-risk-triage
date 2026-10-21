@@ -17,6 +17,7 @@ import json
 
 from lar.node import BaseNode, LLMNode, ToolNode, BatchNode, AddValueNode, HumanJuryNode
 from lar.state import GraphState
+from retrieval import retrieve, format_for_prompt
 from lar.compliance import (
     PromptInjectionGuard, PromptInjectionError,
     BranchTriageNode,
@@ -143,6 +144,48 @@ branch_triage = BranchTriageNode(
 
 
 # ---------------------------------------------------------------------------
+# RAG (optional): ground each branch in retrieved underwriting guidelines.
+# Retrieval runs once, after the injection guard and before the fan-out, and
+# each branch only sees guidelines tagged for its own dimension (plus the
+# general ones), so the three analyses stay independent. Off by default so the
+# Lar-vs-LangChain comparison keeps its identical baseline pipeline; the app
+# and `run_eval.py --rag` turn it on.
+# ---------------------------------------------------------------------------
+
+RAG_K = 4
+_RAG_DIMENSIONS = ("property", "financial", "regulatory")
+_RAG_TEMPLATE = (
+    "Relevant underwriting guidelines (cite the id of any you rely on in your "
+    "finding):\n{{{dim}_guidelines}}\n\nSubmission:\n{{raw_submission}}"
+)
+
+
+def _retrieve_guidelines(state: GraphState):
+    raw = state.get("raw_submission") or ""
+    out, consulted = {}, {}
+    for dim in _RAG_DIMENSIONS:
+        hits = retrieve(raw, dim, k=RAG_K)
+        out[f"{dim}_guidelines"] = format_for_prompt(hits)
+        consulted[dim] = [{"id": h["id"], "title": h["title"], "score": h["score"]} for h in hits]
+    out["guidelines_consulted"] = consulted
+    return out
+
+
+def build_rag_branch_nodes():
+    systems = {"property": PROPERTY_SYSTEM, "financial": FINANCIAL_SYSTEM, "regulatory": REGULATORY_SYSTEM}
+    return [
+        LLMNode(
+            model_name=MODEL,
+            system_instruction=systems[dim],
+            prompt_template=_RAG_TEMPLATE.format(dim=dim),
+            output_key=f"{dim}_analysis",
+            next_node=None,
+        )
+        for dim in _RAG_DIMENSIONS
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Aggregate confidence across branches -- the WORST (lowest) branch
 # confidence drives oversight, never an average: a single uncertain branch
 # should not be diluted by two confident ones.
@@ -213,7 +256,7 @@ def _record_final_decision(state: GraphState):
     return {"final_decision": (choice or "").upper()}
 
 
-def build_graph():
+def build_graph(rag: bool = False):
     ledger = AuthorityLedger(hmac_secret="marsh-eval-not-a-real-secret")
 
     final_record = ToolNode(
@@ -252,12 +295,22 @@ def build_graph():
     )
 
     branch_triage.next_node = confidence_node
-    batch_node.next_node = branch_triage
+    if rag:
+        fan_out = BatchNode(nodes=build_rag_branch_nodes(), next_node=branch_triage)
+        first_stage = ToolNode(
+            tool_function=_retrieve_guidelines,
+            input_keys=["__state__"],
+            output_key=None,
+            next_node=fan_out,
+        )
+    else:
+        batch_node.next_node = branch_triage
+        first_stage = batch_node
 
     injection_guard = PromptInjectionGuard(
         input_keys=["raw_submission"],
         block_on_detection=True,
-        next_node=batch_node,
+        next_node=first_stage,
     )
 
     redact_node = ToolNode(

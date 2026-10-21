@@ -1,0 +1,128 @@
+{
+  "ledger_type": "AUTHORITY_EXERCISE_LEDGER",
+  "eu_ai_act_reference": "Articles 12\u201314: Human Oversight Evidence Chain",
+  "total_records": 8,
+  "records": [
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:49:46.990614Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is in LOW risk category due to its modern brick construction, no prior claims, and absence of flood and subsidence risks.\n  FINANCIAL     : LOW      \u2014 The applicant meets the criteria for LOW financial risk as per guideline G-FIN-03, being an individual residential applicant with sum insured under EUR 1 million and no adverse credit indicators.\n  REGULATORY    : LOW      \u2014 No adverse indicators or connections to sanctioned entities are present for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.95,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:49:58.121319Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : CRITICAL \u2014 Location is on a mapped flood plain with a total insured value above EUR 2 million and no installed flood defenses, as per guideline [G-PROP-01].\n  FINANCIAL     : HIGH     \u2014 Sum insured exceeds ten times annual turnover or net assets without explanation, and the entity has a history of water damage claims.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited-jurisdiction, or AML/regulatory-investigation flags are present for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.9,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:50:09.224064Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is NOT in a flood zone, has NO history of subsidence, and NO prior claims, meeting the criteria for LOW risk.\n  FINANCIAL     : LOW      \u2014 The sum insured is under EUR 1 million and there are no adverse credit indicators, meeting the criteria for LOW financial risk per guideline G-FIN-03.\n  REGULATORY    : LOW      \u2014 No adverse indicators related to sanctions, prohibited jurisdictions, or AML/regulatory investigations are present.",
+      "risk_score_at_decision": 1.0,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:50:21.018683Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is modern construction with no flood exposure and no prior claims history, meeting all LOW criteria under G-PROP-01, G-PROP-02, and G-PROP-03.\n  FINANCIAL     : CRITICAL \u2014 A newly formed entity with no trading history requesting a sum insured exceeding EUR 5 million is considered CRITICAL risk.\n  REGULATORY    : LOW      \u2014 No adverse indicators of sanctions, prohibited jurisdictions, or AML/regulatory investigations are present for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.95,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:50:33.158216Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is NOT in a flood zone and has no flood history, meeting the criteria for LOW risk under G-PROP-01.\n  FINANCIAL     : HIGH     \u2014 The sum insured exceeds EUR 5 million without provided audited financials and a three-year trading history, triggering a CRITICAL risk level per G-FIN-01 and G-FIN-02, despite the property condition being unremarkable and outside the scope of this assessment.\n  REGULATORY    : CRITICAL \u2014 The beneficial owner's registered address is in a sanctioned jurisdiction according to [G-REG-01].",
+      "risk_score_at_decision": 1.0,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:50:44.885985Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is a 2019-built ground-floor apartment in Dublin 2 with no history of flooding or claims, thus meeting LOW risk criteria per G-PROP-01 and G-PROP-03 guidelines.\n  FINANCIAL     : LOW      \u2014 Sum insured is below EUR 1 million and no adverse credit indicators are present for a standard residential applicant.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited-jurisdiction, AML, or regulatory-investigation flags are present for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 1.0,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:50:56.182760Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The location is not in a flood zone and has no prior claims history, meeting guidelines G-PROP-01 and G-PROP-03 for LOW risk.\n  FINANCIAL     : MEDIUM   \u2014 The sum insured is under EUR 1 million and there are no adverse credit indicators, but the applicant's employer is under investigation which raises concern.\n  REGULATORY    : CRITICAL \u2014 The applicant's employer is currently under active investigation for sanctions evasion, raising CRITICAL regulatory risk.",
+      "risk_score_at_decision": 0.8,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T13:51:06.785622Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is standard masonry built after 2000, not in a flood zone, with no prior claims, meeting all LOW criteria for construction, flood exposure, and claims history.\n  FINANCIAL     : LOW      \u2014 Applicant is a standard residential individual with a sum insured under EUR 1 million and no adverse credit indicators.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited jurisdictions, or AML/regulatory-investigation flags are present for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 1.0,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    }
+  ],
+  "signature": "28d2b3e7af6180de337484e36ccffc5230b943bd36cef554abee8c24424b11ae"
+}

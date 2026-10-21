@@ -6,6 +6,7 @@ false-negative rate, and whether the consolidated summary surfaced the
 worst branch. See SPEC.md for the full reporting contract.
 """
 import os
+import sys
 import json
 import time
 
@@ -47,11 +48,31 @@ def classify_outcome(last_step: dict) -> tuple:
     return decision, worst
 
 
+def _citation_fields(last_step: dict, rag: bool) -> dict:
+    """RAG runs only: which guidelines were retrieved per branch, and which
+    guideline ids the model actually cited in its findings (a retrieved
+    guideline the model never mentions did not visibly ground anything)."""
+    if not rag:
+        return {}
+    sa = last_step.get("state_after", {})
+    consulted = sa.get("guidelines_consulted") or {}
+    retrieved = sorted({g["id"] for hits in consulted.values() for g in hits})
+    text = " ".join(sa.get(k) or "" for k in ("property_analysis", "financial_analysis", "regulatory_analysis"))
+    cited = sorted({i for i in retrieved if i in text})
+    return {"guidelines_retrieved": retrieved, "guidelines_cited": cited}
+
+
 def main():
+    global RESULTS_PATH, LEDGER_PATH
+    rag = "--rag" in sys.argv
+    if rag:  # keep the baseline results intact; write the RAG run alongside
+        RESULTS_PATH = os.path.join(HERE, "eval_results_rag.json")
+        LEDGER_PATH = os.path.join(HERE, "lar_logs", "authority_ledger_rag.json")
+
     with open(CASES_PATH) as f:
         cases = json.load(f)["cases"]
 
-    start_node, ledger = build_graph()
+    start_node, ledger = build_graph(rag=rag)
     results = []
     t_total0 = time.time()
 
@@ -85,6 +106,7 @@ def main():
             "actual_min_severity": actual_min_severity,
             "severity_match": severity_match,
             "elapsed_seconds": round(elapsed, 1),
+            **_citation_fields(last, rag),
         })
         print(f"[{case['id']}] expected={expected_decision} actual={actual_decision} "
               f"match={match} severity_expected={expected_min_severity} "
@@ -108,7 +130,12 @@ def main():
         "false_negative_case_ids": [r["case_id"] for r in false_negatives],
         "severity_surfacing_correct": sum(1 for r in results if r["severity_match"]),
         "wall_clock_seconds": round(total_elapsed, 1),
+        "rag": rag,
     }
+    if rag:
+        analysed = [r for r in results if r["guidelines_retrieved"]]
+        summary["cases_citing_a_guideline"] = sum(1 for r in analysed if r["guidelines_cited"])
+        summary["cases_with_retrieval"] = len(analysed)
 
     output = {"results": results, "summary": summary}
     with open(RESULTS_PATH, "w") as f:

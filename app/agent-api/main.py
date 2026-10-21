@@ -25,6 +25,8 @@ Config (environment variables, all optional for local dev):
   TRIAGE_HMAC_SECRET      signing key for run logs and the ledger
   TRIAGE_LEDGER_PATH      where the signed ledger is saved
   TRIAGE_ALLOWED_ORIGIN   CORS origin for the frontend
+  TRIAGE_RAG              1 (default) grounds each branch in retrieved
+                          underwriting guidelines; 0 disables retrieval
 """
 import os
 import sys
@@ -58,6 +60,7 @@ if HMAC_SECRET == DEV_SECRET:
 
 LEDGER_PATH = os.environ.get("TRIAGE_LEDGER_PATH", str(HERE / "data" / "app_authority_ledger.json"))
 ALLOWED_ORIGIN = os.environ.get("TRIAGE_ALLOWED_ORIGIN", "http://localhost:5173")
+RAG_ENABLED = os.environ.get("TRIAGE_RAG", "1") != "0"
 
 app = FastAPI(title="Marsh Risk Triage Agent API")
 app.add_middleware(
@@ -93,19 +96,28 @@ def _build_phase1_graph():
     confidence aggregation. Stops BEFORE RiskScorerNode/HumanJuryNode --
     this phase never decides bind/refer, it only produces the evidence a
     human decision needs."""
-    property_node = LLMNode(
-        model_name=lar_agent.MODEL, system_instruction=lar_agent.PROPERTY_SYSTEM,
-        prompt_template="Submission:\n{raw_submission}", output_key="property_analysis", next_node=None,
-    )
-    financial_node = LLMNode(
-        model_name=lar_agent.MODEL, system_instruction=lar_agent.FINANCIAL_SYSTEM,
-        prompt_template="Submission:\n{raw_submission}", output_key="financial_analysis", next_node=None,
-    )
-    regulatory_node = LLMNode(
-        model_name=lar_agent.MODEL, system_instruction=lar_agent.REGULATORY_SYSTEM,
-        prompt_template="Submission:\n{raw_submission}", output_key="regulatory_analysis", next_node=None,
-    )
-    batch_node = BatchNode(nodes=[property_node, financial_node, regulatory_node], next_node=None)
+    if RAG_ENABLED:
+        branch_nodes = lar_agent.build_rag_branch_nodes()
+    else:
+        branch_nodes = [
+            LLMNode(
+                model_name=lar_agent.MODEL, system_instruction=system,
+                prompt_template="Submission:\n{raw_submission}", output_key=key, next_node=None,
+            )
+            for system, key in (
+                (lar_agent.PROPERTY_SYSTEM, "property_analysis"),
+                (lar_agent.FINANCIAL_SYSTEM, "financial_analysis"),
+                (lar_agent.REGULATORY_SYSTEM, "regulatory_analysis"),
+            )
+        ]
+    batch_node = BatchNode(nodes=branch_nodes, next_node=None)
+    # With RAG on, retrieval runs once before the fan-out (see agent.py).
+    first_stage = batch_node
+    if RAG_ENABLED:
+        first_stage = ToolNode(
+            tool_function=lar_agent._retrieve_guidelines, input_keys=["__state__"],
+            output_key=None, next_node=batch_node,
+        )
 
     confidence_node = ToolNode(
         tool_function=lar_agent._aggregate_confidence, input_keys=["__state__"], output_key=None, next_node=None,
@@ -119,7 +131,7 @@ def _build_phase1_graph():
     batch_node.next_node = branch_triage
 
     injection_guard = PromptInjectionGuard(
-        input_keys=["raw_submission"], block_on_detection=True, next_node=batch_node,
+        input_keys=["raw_submission"], block_on_detection=True, next_node=first_stage,
     )
     redact_node = ToolNode(
         tool_function=lar_agent._redact_for_log, input_keys=["__state__"], output_key=None, next_node=injection_guard,
@@ -175,6 +187,7 @@ def assess(req: AssessRequest):
         "branch_findings_summary": sa.get("branch_findings_summary"),
         "branch_critical": sa.get("branch_critical"),
         "model_confidence": sa.get("model_confidence"),
+        "guidelines_consulted": sa.get("guidelines_consulted"),
     }
 
 

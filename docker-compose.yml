@@ -1,0 +1,56 @@
+# docker compose up --build        -> http://localhost:5173
+#
+# The model runs in Ollama on your host by default (no GPU passthrough needed
+# on macOS). To run Ollama in compose instead:
+#   OLLAMA_API_BASE=http://ollama:11434 docker compose --profile with-ollama up --build
+#   docker compose exec ollama ollama pull qwen2.5:14b
+services:
+  agent-api:
+    build:
+      context: .
+      dockerfile: app/agent-api/Dockerfile
+    environment:
+      TRIAGE_MODEL: ${TRIAGE_MODEL:-ollama/qwen2.5:14b}
+      TRIAGE_HMAC_SECRET: ${TRIAGE_HMAC_SECRET:-change-me}
+      TRIAGE_RAG: ${TRIAGE_RAG:-1}
+      OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ledger:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/openapi.json')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./app/backend
+    environment:
+      AGENT_API_URL: http://agent-api:8010
+      ALLOWED_ORIGIN: http://localhost:${FRONTEND_PORT:-5173}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    depends_on:
+      agent-api:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./app/frontend
+      args:
+        VITE_BACKEND_URL: http://localhost:${BACKEND_PORT:-4000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+  ollama:
+    image: ollama/ollama
+    profiles: ["with-ollama"]
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  ledger:
+  ollama:

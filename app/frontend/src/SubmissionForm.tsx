@@ -11,6 +11,7 @@ interface AssessResult {
   status: 'needs_review' | 'blocked' | 'rejected_at_intake' | 'error'
   reason?: string
   assessment_id?: string
+  guidelines_consulted?: Record<string, GuidelineHit[]> | null
   branch_findings_summary?: string
   branch_critical?: boolean
   model_confidence?: number
@@ -24,6 +25,14 @@ interface DecideResult {
   final_decision: string
   computed_oversight_level: string
   ledger_record: Record<string, unknown>
+}
+
+// A guideline the RAG step retrieved for one branch, shown so the reviewer
+// can see what the model was grounded in (and check it against the finding).
+interface GuidelineHit {
+  id: string
+  title: string
+  score: number
 }
 
 interface BranchFinding {
@@ -64,7 +73,15 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return res.json()
 }
 
-function RiskCard({ dimension, raw }: { dimension: string; raw: string | null | undefined }) {
+function RiskCard({
+  dimension,
+  raw,
+  guidelines,
+}: {
+  dimension: string
+  raw: string | null | undefined
+  guidelines?: GuidelineHit[]
+}) {
   const parsed = parseBranch(raw)
   if (!parsed) {
     return (
@@ -95,6 +112,11 @@ function RiskCard({ dimension, raw }: { dimension: string; raw: string | null | 
       </div>
       <p className="risk-card-finding">{parsed.finding}</p>
       <p className="confidence-line">confidence {parsed.confidence?.toFixed(2)}</p>
+      {guidelines && guidelines.length > 0 && (
+        <p className="confidence-line" title={guidelines.map((g) => `${g.id}: ${g.title}`).join('\n')}>
+          guidelines: {guidelines.map((g) => g.id).join(' · ')}
+        </p>
+      )}
     </div>
   )
 }
@@ -174,9 +196,9 @@ export function SubmissionForm() {
           <div>
             <h3>Branch findings</h3>
             <div className="risk-grid">
-              <RiskCard dimension="Property" raw={result.property_analysis} />
-              <RiskCard dimension="Financial" raw={result.financial_analysis} />
-              <RiskCard dimension="Regulatory" raw={result.regulatory_analysis} />
+              <RiskCard dimension="Property" raw={result.property_analysis} guidelines={result.guidelines_consulted?.property} />
+              <RiskCard dimension="Financial" raw={result.financial_analysis} guidelines={result.guidelines_consulted?.financial} />
+              <RiskCard dimension="Regulatory" raw={result.regulatory_analysis} guidelines={result.guidelines_consulted?.regulatory} />
             </div>
             <p className="confidence-line" style={{ marginTop: 10 }}>
               worst-branch confidence {result.model_confidence?.toFixed(2)} · critical: {String(result.branch_critical)}

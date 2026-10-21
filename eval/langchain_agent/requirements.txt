@@ -1,0 +1,4 @@
+# Only needed to run the LangChain/LangGraph side of the comparison.
+langchain-core
+langchain-ollama
+langgraph
