@@ -1,0 +1,120 @@
+{
+  "ledger_type": "AUTHORITY_EXERCISE_LEDGER",
+  "eu_ai_act_reference": "Articles 12-14: Human Oversight Evidence Chain",
+  "total_records": 8,
+  "records": [
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:29:42.132771Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=LOW: bind. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "LOW",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:29:50.182104Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=CRITICAL: refer. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "CRITICAL",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:29:57.204676Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=LOW: bind. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "LOW",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:30:05.338907Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=HIGH: refer. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "HIGH",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:30:12.865773Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=HIGH: refer. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "HIGH",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:30:19.711290Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=LOW: bind. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "LOW",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:30:36.307527Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=HIGH: refer. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "HIGH",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:30:44.045917Z",
+      "action_description": "Bind or refer property risk submission",
+      "stakeholder_id": "eval-harness-auto",
+      "stakeholder_role": "AUTOMATED_EVAL_STAKEHOLDER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (no live human reviewer attached). AI-recommended decision based on consolidated_risk_level=LOW: bind. In production this pause point is a real human sign-off, not this callback.",
+      "risk_score_at_decision": {
+        "consolidated_risk_level": "LOW",
+        "oversight_level": "PRE_EXECUTION"
+      }
+    }
+  ],
+  "signature": "6c2a075f7134c6beaa6eb53ce2c4acd2989a7b2fba13362bd3127693338ec96f"
+}

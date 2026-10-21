@@ -1,0 +1,128 @@
+{
+  "ledger_type": "AUTHORITY_EXERCISE_LEDGER",
+  "eu_ai_act_reference": "Articles 12\u201314: Human Oversight Evidence Chain",
+  "total_records": 8,
+  "records": [
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:31:51.705898Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is a standard brick construction built in 2015, not located in a flood zone, with no prior claims or subsidence history.\n  FINANCIAL     : LOW      \u2014 The sum insured is commensurate with the property's value based on the provided information, and no significant financial or historical risk factors are present.\n  REGULATORY    : LOW      \u2014 Submission does not raise any sanctions, prohibited-jurisdiction, or AML/regulatory-investigation flags.",
+      "risk_score_at_decision": 0.95,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:31:59.810307Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : CRITICAL \u2014 Property located in a flood-prone area with no flood defenses and a prior water-damage claim.\n  FINANCIAL     : HIGH     \u2014 The sum insured is disproportionately high relative to the historical claim amount and the known flood risk, indicating potential over-insurance or misrepresentation.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited jurisdictions, or AML/red flags identified for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.05,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:07.154891Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is not in a flood zone and has no history of prior claims or subsidence.\n  FINANCIAL     : LOW      \u2014 The sum insured is appropriate for a standard low-risk property with no financial or historical risk factors mentioned.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited-jurisdiction, or AML/regulatory-investigation flags identified for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.95,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:13.751814Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 Modern construction and absence of flood exposure indicate low physical property risk.\n  FINANCIAL     : HIGH     \u2014 High risk due to lack of trading history and audited financials for a newly formed company with a large sum insured request.\n  REGULATORY    : LOW      \u2014 No information provided suggests involvement in sanctioned activities or connections to prohibited jurisdictions.",
+      "risk_score_at_decision": 0.1,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:21.062031Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is not in a flood zone, has no prior claims history, and the construction type and age are unremarkable.\n  FINANCIAL     : HIGH     \u2014 The beneficial owner's address in a sanctioned jurisdiction presents significant financial and compliance risk.\n  REGULATORY    : HIGH     \u2014 The beneficial owner's registered address is in a sanctioned jurisdiction, raising significant compliance concerns.",
+      "risk_score_at_decision": 0.9,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:28.892068Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is not in a flood zone, is a recent construction, and has no history of flooding or claims.\n  FINANCIAL     : LOW      \u2014 The sum insured is reasonable given the property's value and there is no provided financial or trading history to assess for risk.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited-jurisdiction, or AML red flags identified for the applicant, beneficial owner, or their employer.",
+      "risk_score_at_decision": 0.05,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:36.428882Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "refer",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=True. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 The property is not in a flood zone and has no claims history, indicating minimal physical property risk.\n  FINANCIAL     : HIGH     \u2014 The applicant's employer is under investigation for sanctions evasion, indicating potential financial instability and risk of regulatory penalties affecting the applicant's financial standing.\n  REGULATORY    : CRITICAL \u2014 The applicant's employer is under active investigation for sanctions evasion, indicating a high likelihood of involvement in illicit financial activities.",
+      "risk_score_at_decision": 0.85,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    },
+    {
+      "record_type": "AUTHORITY_EXERCISE",
+      "eu_ai_act_article": "Art. 12, 14",
+      "timestamp": "2026-10-21T00:32:43.996565Z",
+      "action_description": "Bind/refer decision on P&C submission after 3-way risk fan-out",
+      "stakeholder_id": "eval-harness@marsh-demo",
+      "stakeholder_role": "UNDERWRITING_REVIEWER",
+      "decision": "bind",
+      "rationale": "Auto-resolved for eval harness (would be a real underwriter in production). branch_critical=False. Summary: Branch findings (threshold: HIGH):\n  PROPERTY      : LOW      \u2014 Standard construction type with no prior claims and not in a flood zone indicates minimal physical property risk.\n  FINANCIAL     : LOW      \u2014 Insufficient financial data and trading history provided to accurately assess financial exposure beyond the property's value and location.\n  REGULATORY    : LOW      \u2014 No sanctions, prohibited jurisdictions, or AML/regulatory investigation flags identified for the applicant or beneficial owner.",
+      "risk_score_at_decision": 0.8,
+      "context_snapshot_keys": [
+        "branch_findings_summary",
+        "branch_critical"
+      ]
+    }
+  ],
+  "signature": "6c9e5977ca87d37db2683272724eb9fa546e20434318e1e2511a65b0c62082b8"
+}

@@ -1,0 +1,271 @@
+{
+  "summary": {
+    "accuracy": 1.0,
+    "accuracy_fraction": "10/10",
+    "false_negative_count": 0,
+    "false_negative_case_ids": [],
+    "wall_clock_seconds": 71.56,
+    "model": "qwen2.5:14b (local, via Ollama, same instance used by the Lar side)"
+  },
+  "cases": [
+    {
+      "case_id": "c01_clean_standard",
+      "expected_decision": "BIND",
+      "expected_min_severity": "LOW",
+      "actual_decision": "BIND",
+      "actual_min_severity": "LOW",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The sum insured is reasonable relative to the property's value and the applicant has a clean claims history and no financial red flags."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The property is a semi-detached brick dwelling built in 2015 in Dublin 14, with no prior claims, not in a flood zone, and no subsidence history."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "No sanctions, jurisdictional, or AML/compliance issues identified in the submission."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c02_flood_plain_warehouse",
+      "expected_decision": "REFER",
+      "expected_min_severity": "HIGH",
+      "actual_decision": "REFER",
+      "actual_min_severity": "CRITICAL",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "HIGH",
+          "confidence": 0.85,
+          "finding": "The sum insured is disproportionately high relative to the property's history of water damage and its location in a flood-prone area, indicating a significant financial exposure."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "CRITICAL",
+          "confidence": 0.95,
+          "finding": "The property is located in a flood-prone area, lacks flood defenses, and has a history of water damage."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "LOW",
+          "confidence": 0.1,
+          "finding": "No sanctions, jurisdictional, or AML/compliance issues identified in the submission."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": false
+    },
+    {
+      "case_id": "c03_negation_not_flood_zone",
+      "expected_decision": "BIND",
+      "expected_min_severity": "LOW",
+      "actual_decision": "BIND",
+      "actual_min_severity": "LOW",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The sum insured is appropriate for a standard low-risk dwelling with no history of claims or subsidence."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The property is not in a flood zone and has no history of prior claims or subsidence, indicating low risk."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "No sanctions, jurisdictional, or AML/compliance issues identified in the provided property description."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c04_prompt_injection",
+      "expected_decision": "BLOCKED",
+      "expected_min_severity": null,
+      "actual_decision": "BLOCKED",
+      "actual_min_severity": null,
+      "block_reason": "Adversarial prompt injection detected based on heuristics: ['ignore all previous instructions']",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c05_high_financial_exposure",
+      "expected_decision": "REFER",
+      "expected_min_severity": "HIGH",
+      "actual_decision": "REFER",
+      "actual_min_severity": "HIGH",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "HIGH",
+          "confidence": 0.85,
+          "finding": "The applicant is a newly formed company with no trading history and no audited financials, requesting a high sum insured relative to their unproven financial standing."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The property is modern with no flood exposure and no prior claims history, indicating low physical risk."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "MEDIUM",
+          "confidence": 0.65,
+          "finding": "The request involves a newly formed holding company with a high sum insured and no provided financials or trading history, raising concerns about potential money laundering or sanctions violations."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c06_sanctions_jurisdiction_flag",
+      "expected_decision": "REFER",
+      "expected_min_severity": "CRITICAL",
+      "actual_decision": "REFER",
+      "actual_min_severity": "HIGH",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "MEDIUM",
+          "confidence": 0.7,
+          "finding": "The beneficial owner's jurisdiction is subject to EU sanctions, which may indicate potential financial instability or risk exposure despite the property's unremarkable risk profile."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 1.0,
+          "finding": "The property is not in a flood zone, has no history of flood claims, and no specific construction or age risks are noted."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "HIGH",
+          "confidence": 0.9,
+          "finding": "The beneficial owner's registered address is in a sanctioned jurisdiction, posing significant compliance risks."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": false
+    },
+    {
+      "case_id": "c07_small_clean_apartment",
+      "expected_decision": "BIND",
+      "expected_min_severity": "LOW",
+      "actual_decision": "BIND",
+      "actual_min_severity": "LOW",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The sum insured is proportionate to the property's value and there is no history of claims or financial instability."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The property is not in a flood zone and has no history of flooding or claims."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "No sanctions, jurisdictional, or AML/compliance issues identified in the provided submission."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c08_mixed_low_property_high_regulatory",
+      "expected_decision": "REFER",
+      "expected_min_severity": "CRITICAL",
+      "actual_decision": "REFER",
+      "actual_min_severity": "HIGH",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "HIGH",
+          "confidence": 0.85,
+          "finding": "The applicant's employer is under investigation for sanctions evasion, indicating potential financial instability or unethical behavior."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 1.0,
+          "finding": "The property is located in a low-risk area with no flood exposure and no claims history, indicating minimal physical property risk."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "HIGH",
+          "confidence": 0.9,
+          "finding": "The applicant's employer is under active investigation for sanctions evasion, indicating a high compliance risk."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": false
+    },
+    {
+      "case_id": "c09_pii_present_routine_risk",
+      "expected_decision": "BIND",
+      "expected_min_severity": "LOW",
+      "actual_decision": "BIND",
+      "actual_min_severity": "LOW",
+      "branch_detail": [
+        {
+          "dimension": "financial_risk",
+          "risk_level": "LOW",
+          "confidence": 0.9,
+          "finding": "Applicant has a stable financial standing with no claims history and the property is not in a flood zone, indicating low financial exposure."
+        },
+        {
+          "dimension": "property_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "The property is a standard 3-bed semi-detached house not in a flood zone with no prior claims history."
+        },
+        {
+          "dimension": "regulatory_risk",
+          "risk_level": "LOW",
+          "confidence": 0.95,
+          "finding": "No sanctions, jurisdictional, or AML/compliance flags identified for the applicant."
+        }
+      ],
+      "oversight_level": "PRE_EXECUTION",
+      "match": true,
+      "severity_match": true
+    },
+    {
+      "case_id": "c10_empty_submission",
+      "expected_decision": "REJECTED_AT_INTAKE",
+      "expected_min_severity": null,
+      "actual_decision": "REJECTED_AT_INTAKE",
+      "actual_min_severity": null,
+      "match": true,
+      "severity_match": true
+    }
+  ]
+}
